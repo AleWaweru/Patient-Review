@@ -19,7 +19,7 @@ const createAccount = async (req, res) => {
       name,
       email,
       password,
-      role: "user", // default role 
+      role: "user", // Default role
     });
 
     await newUser.save();
@@ -38,9 +38,21 @@ const createAccount = async (req, res) => {
 const loginAccount = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const user = await User.findOne({ email });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Compare the entered password with the hashed password stored in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password comparison result:", isMatch);
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
@@ -55,4 +67,14 @@ const loginAccount = async (req, res) => {
   }
 };
 
-export { createAccount, loginAccount };
+const logoutAccount = async (req, res) => {
+  try {
+    // On the frontend, remove the token from local storage or cookies
+    res.json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Error logging out:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export { createAccount, loginAccount, logoutAccount };

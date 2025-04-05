@@ -1,6 +1,7 @@
 import Hospital from "../models/HospitalModel.js";
 import User from "../models/UserModel.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { generateQRCode, regenerateQRCodes } from "../utils/GenQrCode.js";
 
 
@@ -21,10 +22,17 @@ const createHospital = async (req, res) => {
       return res.status(400).json({ message: "Email is already in use" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const hospital = new Hospital({ name, email });
+    // Generate a JWT token for the hospital
+    
+    const token = jwt.sign({ email, role: "hospital" }, process.env.JWT_SECRET, {
+      expiresIn: "7d", // Token valid for 7 days
+    });
 
+    console.log("token", token);
+
+
+    const hospital = new Hospital({ name, email, authToken: token});
     // Generate QR Code
     hospital.qrCode = await generateQRCode(hospital._id);
     hospital.qrCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Expires in 24 hours
@@ -34,19 +42,62 @@ const createHospital = async (req, res) => {
     const hospitalUser = new User({
       name,
       email,
-      password: hashedPassword,
+      password,
       role: "hospital",
       hospitalId: hospital._id,
     });
 
     await hospitalUser.save();
 
-    res.status(201).json({ message: "Hospital login account created successfully", hospital });
+    res.status(201).json({ message: "Hospital login account created successfully", hospital, token });
   } catch (error) {
     console.error("Error creating hospital:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const loginHospital = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const hospitalUser = await User.findOne({ email });
+
+    if (!hospitalUser) {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, hospitalUser.password);
+    console.log("Password match:", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      {
+        email: hospitalUser.email,
+        role: hospitalUser.role,
+        hospitalId: hospitalUser.hospitalId,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Error logging in hospital:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 const updateHospitalProfile = async (req, res) => {
   try {
@@ -79,4 +130,4 @@ const updateHospitalProfile = async (req, res) => {
 // Run QR code regeneration every hour
 setInterval(regenerateQRCodes, 60 * 60 * 1000);
 
-export { createHospital, updateHospitalProfile };
+export { createHospital,loginHospital, updateHospitalProfile };

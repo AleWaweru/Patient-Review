@@ -14,15 +14,14 @@ const HospitalSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
     trim: true,
   },
   address: {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    zipCode: { type: String, required: true },
-    country: { type: String, required: true },
+    street: { type: String },
+    city: { type: String },
+    state: { type: String },
+    zipCode: { type: String },
+    country: { type: String },
   },
   website: {
     type: String,

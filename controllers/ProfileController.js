@@ -1,6 +1,7 @@
 import Profile from "../models/ProfileModel.js";
 import User from "../models/UserModel.js";
 
+
 // Create a user profile
 const createProfile = async (req, res) => {
   try {
