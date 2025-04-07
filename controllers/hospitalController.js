@@ -3,6 +3,7 @@ import User from "../models/UserModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateQRCode, regenerateQRCodes } from "../utils/GenQrCode.js";
+import mongoose from "mongoose";
 
 
 const createHospital = async (req, res) => {
@@ -126,8 +127,38 @@ const updateHospitalProfile = async (req, res) => {
   }
 };
 
+const getAllHospitals = async (req, res) => {
+  try {
+    const hospitals = await Hospital.find().sort({ createdAt: -1 });
+    res.status(200).json({ hospitals });
+  } catch (error) {
+    console.error("Error getting hospitals:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Get hospital profile by ID (PUBLIC)
+const getHospitalById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid hospital ID" });
+    }
+
+    const hospital = await Hospital.findById(id);
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
+
+    res.status(200).json({ hospital });
+  } catch (error) {
+    console.error("Error getting hospital by ID:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 // Run QR code regeneration every hour
 setInterval(regenerateQRCodes, 60 * 60 * 1000);
 
-export { createHospital,loginHospital, updateHospitalProfile };
+export { createHospital,loginHospital, updateHospitalProfile, getAllHospitals,getHospitalById };

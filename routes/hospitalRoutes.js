@@ -2,6 +2,10 @@ import express from "express";
 import {
   createHospital,
 
+  getAllHospitals,
+
+  getHospitalById,
+
   loginHospital,
 
   updateHospitalProfile,
@@ -24,7 +28,7 @@ router.put(
   checkHospital,
   updateHospitalProfile
 );
-
-router;
+router.get("/allHospitals", getAllHospitals);     
+router.get("/:id",getHospitalById);       
 
 export default router;
