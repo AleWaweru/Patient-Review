@@ -80,10 +80,7 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-
+    user.password = newPassword;
     await user.save();
 
     res.json({ message: "Password reset successful" });
