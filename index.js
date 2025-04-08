@@ -6,7 +6,6 @@ import { connectToDB } from "./config/db.js";
 import authRoutes from "./routes/AuthRoutes.js";
 import hospitalRoutes from "./routes/hospitalRoutes.js";
 import profileRoutes from "./routes/profileRoute.js";
-import { verifyToken } from "./middleware/jwt/verifyToken.js";
 
 dotenv.config();
 
@@ -22,7 +21,6 @@ connectToDB();
 
 app.use("/api/auth", authRoutes);
 // protected routes
-app.use(verifyToken); // Ensure all routes below requires authentication
 app.use("/api/hospitals", hospitalRoutes);
 app.use("/api/profiles", profileRoutes);
 

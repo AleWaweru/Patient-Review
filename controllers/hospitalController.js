@@ -99,28 +99,31 @@ const loginHospital = async (req, res) => {
 };
 
 
-
 const updateHospitalProfile = async (req, res) => {
   try {
-    if (req.user.role !== "hospital") {
-      return res.status(403).json({ message: "Access denied. Hospitals only." });
+    const {id} = req.params;
+    const {phone, address, website, image } = req.body;
+
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid hospital ID" });
     }
 
-    const { phone, address, website, image } = req.body;
-    const hospital = await Hospital.findById(req.user.hospitalId);
+    const hospital = await Hospital.findById(id);
 
     if (!hospital) {
       return res.status(404).json({ message: "Hospital not found" });
     }
 
-    hospital.phone = phone || hospital.phone;
-    hospital.address = address || hospital.address;
-    hospital.website = website || hospital.website;
-    hospital.image = image || hospital.image;
+    // Update fields if provided
+    if (phone) hospital.phone = phone;
+    if (address) hospital.address = address;
+    if (website) hospital.website = website;
+    if (image) hospital.image = image;
 
     await hospital.save();
 
-    res.status(200).json({ message: "Hospital profile updated successfully", hospital });
+    res.json({ message: "Hospital profile updated successfully", hospital });
   } catch (error) {
     console.error("Error updating hospital profile:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -141,6 +144,7 @@ const getAllHospitals = async (req, res) => {
 const getHospitalById = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Hospital ID:", id);
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid hospital ID" });

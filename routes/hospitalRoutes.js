@@ -22,12 +22,8 @@ const router = express.Router();
 router.post("/create",verifyToken,checkAdmin, createHospital);
 router.post("/login",loginHospital );
 
-router.put(
-  "/update-profile",
-  verifyToken,
-  checkHospital,
-  updateHospitalProfile
-);
+router.put("/update-profile/:id", verifyToken, updateHospitalProfile);
+
 router.get("/allHospitals", getAllHospitals);     
 router.get("/:id",getHospitalById);       
 
