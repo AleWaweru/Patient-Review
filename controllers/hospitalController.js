@@ -102,7 +102,7 @@ const loginHospital = async (req, res) => {
 const updateHospitalProfile = async (req, res) => {
   try {
     const {id} = req.params;
-    const {phone, address, website, image } = req.body;
+    const {phone, address, website, image, images } = req.body;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -120,6 +120,10 @@ const updateHospitalProfile = async (req, res) => {
     if (address) hospital.address = address;
     if (website) hospital.website = website;
     if (image) hospital.image = image;
+    if (Array.isArray(images)) {
+      hospital.images = images;
+    }
+    
 
     await hospital.save();
 

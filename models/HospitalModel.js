@@ -31,6 +31,10 @@ const HospitalSchema = new mongoose.Schema({
     type: String, 
     default: "", 
   },
+  images: {
+    type: [String],  // Array of strings (URLs for images)
+    default: [],     // Default to empty array
+  },
   qrCode: { type: String },  // Stores QR code image data
   qrCodeExpiresAt: { type: Date },
   createdAt: {
