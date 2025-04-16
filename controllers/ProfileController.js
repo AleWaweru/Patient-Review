@@ -72,4 +72,26 @@ const updateProfile = async (req, res) => {
   }
 };
 
-export { createProfile, updateProfile };
+// Get the user's profile
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const profile = await Profile.findOne({ userId: user._id });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export { createProfile, updateProfile, getProfile };

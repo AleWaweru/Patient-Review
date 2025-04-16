@@ -19,7 +19,7 @@ const createAccount = async (req, res) => {
       name,
       email,
       password,
-      role: "user", // Default role
+      role: "user", 
     });
 
     await newUser.save();

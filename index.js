@@ -6,6 +6,7 @@ import { connectToDB } from "./config/db.js";
 import authRoutes from "./routes/AuthRoutes.js";
 import hospitalRoutes from "./routes/hospitalRoutes.js";
 import profileRoutes from "./routes/profileRoute.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
 
@@ -23,5 +24,6 @@ app.use("/api/auth", authRoutes);
 // protected routes
 app.use("/api/hospitals", hospitalRoutes);
 app.use("/api/profiles", profileRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.listen(port,"0.0.0.0", () => console.log(`🚀 Server running on port ${port}`));
