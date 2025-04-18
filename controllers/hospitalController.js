@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import { generateQRCode, regenerateQRCodes } from "../utils/GenQrCode.js";
 import mongoose from "mongoose";
 
-
 const createHospital = async (req, res) => {
   try {
     if (req.user.role !== "admin") {
@@ -23,22 +22,20 @@ const createHospital = async (req, res) => {
       return res.status(400).json({ message: "Email is already in use" });
     }
 
+    const token = jwt.sign(
+      { email, role: "hospital" },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
-    // Generate a JWT token for the hospital
-    
-    const token = jwt.sign({ email, role: "hospital" }, process.env.JWT_SECRET, {
-      expiresIn: "7d", // Token valid for 7 days
-    });
+    const hospital = new Hospital({ name, email, authToken: token });
+    await hospital.save(); // Save first to get ID
 
-    console.log("token", token);
-
-
-    const hospital = new Hospital({ name, email, authToken: token});
-    // Generate QR Code
     hospital.qrCode = await generateQRCode(hospital._id);
-    hospital.qrCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Expires in 24 hours
-
-    await hospital.save();
+    hospital.qrCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await hospital.save(); // Save again after QR generation
 
     const hospitalUser = new User({
       name,
@@ -50,7 +47,11 @@ const createHospital = async (req, res) => {
 
     await hospitalUser.save();
 
-    res.status(201).json({ message: "Hospital login account created successfully", hospital, token });
+    res.status(201).json({
+      message: "Hospital login account created successfully",
+      hospital,
+      token,
+    });
   } catch (error) {
     console.error("Error creating hospital:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -62,7 +63,9 @@ const loginHospital = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     const hospitalUser = await User.findOne({ email });
@@ -98,11 +101,10 @@ const loginHospital = async (req, res) => {
   }
 };
 
-
 const updateHospitalProfile = async (req, res) => {
   try {
-    const {id} = req.params;
-    const {phone, address, website, image, images } = req.body;
+    const { id } = req.params;
+    const { phone, address, website, image, images } = req.body;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -123,7 +125,6 @@ const updateHospitalProfile = async (req, res) => {
     if (Array.isArray(images)) {
       hospital.images = images;
     }
-    
 
     await hospital.save();
 
@@ -166,7 +167,41 @@ const getHospitalById = async (req, res) => {
   }
 };
 
+// Verify Hospital by ID (via QR Code)
+const verifyHospitalById = async (req, res) => {
+  try {
+    const { hospitalId } = req.body;
+
+    if (!hospitalId || !mongoose.Types.ObjectId.isValid(hospitalId)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing hospital ID" });
+    }
+
+    const hospital = await Hospital.findById(hospitalId);
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
+
+    if (hospital.qrCodeExpiresAt && hospital.qrCodeExpiresAt < new Date()) {
+      return res.status(403).json({ message: "QR Code has expired" });
+    }
+
+    res.status(200).json({ message: "QR Code is valid", hospital });
+  } catch (error) {
+    console.error("Error verifying hospital by ID:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Run QR code regeneration every hour
 setInterval(regenerateQRCodes, 60 * 60 * 1000);
 
-export { createHospital,loginHospital, updateHospitalProfile, getAllHospitals,getHospitalById };
+export {
+  createHospital,
+  loginHospital,
+  updateHospitalProfile,
+  getAllHospitals,
+  getHospitalById,
+  verifyHospitalById,
+};
