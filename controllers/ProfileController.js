@@ -1,7 +1,6 @@
 import Profile from "../models/ProfileModel.js";
 import User from "../models/UserModel.js";
 
-
 // Create a user profile
 const createProfile = async (req, res) => {
   try {
@@ -31,7 +30,9 @@ const createProfile = async (req, res) => {
 
     await newProfile.save();
 
-    res.status(201).json({ message: "Profile created successfully", profile: newProfile });
+    res
+      .status(201)
+      .json({ message: "Profile created successfully", profile: newProfile });
   } catch (error) {
     console.error("Error creating profile:", error);
     res.status(500).json({ message: "Internal server error" });

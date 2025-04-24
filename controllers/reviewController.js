@@ -18,7 +18,7 @@ export const createReview = async (req, res) => {
 export const getReviewsByHospital = async (req, res) => {
   try {
     const reviews = await ReviewModel.find({ hospitalId: req.params.hospitalId })
-      .populate('user', 'username profileImage') 
+      .populate('user', 'name profileImage') 
       .sort({ createdAt: -1 });
     res.json(reviews);
   } catch (error) {

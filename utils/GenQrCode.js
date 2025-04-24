@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 
 /**
  * Generates a secure QR code for a hospital.
- * @param {string} hospitalId - MongoDB ObjectId of the hospital.
- * @returns {string} Base64 QR code image.
+ * @param {string} hospitalId 
+ * @returns {string} 
  */
 const generateQRCode = async (hospitalId) => {
   const hospital = await Hospital.findById(hospitalId);
@@ -17,9 +17,9 @@ const generateQRCode = async (hospitalId) => {
   return await QRCode.toDataURL(reviewUrl);
 };
 
-/**
- * Regenerates QR codes and tokens for expired hospitals.
- */
+
+ //Regenerates QR codes and tokens for expired hospitals.
+
 const regenerateQRCodes = async () => {
   const expiredHospitals = await Hospital.find({
     qrCodeExpiresAt: { $lte: new Date() },
