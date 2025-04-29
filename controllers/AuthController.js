@@ -90,6 +90,45 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const signUpGoogle = async (req, res, next) => {
+  const { name, email, profilePicUrl } = req.body;
+
+  try {
+    let user = await User.findOne({ email });
+    if (user) {
+      const token = jwtGenerator(user.id);
+      const { password, ...userData } = user.toObject();
+
+      return res
+        .status(200)
+        .cookie("access_token", token, { httpOnly: true })
+        .json({ ...userData, token });
+    }
+
+    const generatedPassword = crypto.randomBytes(16).toString("hex");
+    const hashPassword = await bcrypt.hash(generatedPassword, bcryptSalt);
+
+    user = new User({
+      name: `${name.toLowerCase().replace(/ /g, "")}${Math.random().toString(10).slice(-4)}`,
+      email,
+      password: hashPassword,
+      profilePic: profilePicUrl || undefined,
+    });
+
+    await user.save();
+
+    const token = jwtGenerator(user.id);
+    const { password, ...userData } = user.toObject();
+
+    res
+      .status(201)
+      .cookie("access_token", token, { httpOnly: true })
+      .json({ ...userData, token });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 const logoutAccount = async (req, res) => {
   try {
@@ -101,4 +140,4 @@ const logoutAccount = async (req, res) => {
   }
 };
 
-export { createAccount, loginAccount,resetPassword, logoutAccount };
+export { createAccount, loginAccount,resetPassword, logoutAccount, signUpGoogle };
