@@ -1,2 +1,3 @@
-/node_modules
+r/node_modules
 /.env
+node_modules

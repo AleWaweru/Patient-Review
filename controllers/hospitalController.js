@@ -149,7 +149,6 @@ const getAllHospitals = async (req, res) => {
 const getHospitalById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Hospital ID:", id);
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid hospital ID" });
