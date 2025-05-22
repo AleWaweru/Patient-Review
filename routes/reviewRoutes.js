@@ -8,6 +8,6 @@ const router = express.Router();
 router.post('/createReview', createReview);
 
 // Get all reviews for a hospital
-router.get('/:hospitalId', getReviewsByHospital);
+router.get('/getReviewsByHospital/:hospitalId', getReviewsByHospital);
 
 export default router;
