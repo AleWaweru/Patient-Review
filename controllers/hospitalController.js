@@ -4,6 +4,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateQRCode, regenerateQRCodes } from "../utils/GenQrCode.js";
 import mongoose from "mongoose";
+import crypto from "crypto";
+import TokenModel from "../models/TokenModel.js";
+import { verifyEmail } from "../utils/emailService.js";
 
 const createHospital = async (req, res) => {
   try {
@@ -22,35 +25,42 @@ const createHospital = async (req, res) => {
       return res.status(400).json({ message: "Email is already in use" });
     }
 
-    const token = jwt.sign(
-      { email, role: "hospital" },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    // Create the hospital document first
+    const hospital = new Hospital({ name, email });
+    await hospital.save();
 
-    const hospital = new Hospital({ name, email, authToken: token });
-    await hospital.save(); // Save first to get ID
-
+    // Generate QR code and set expiration
     hospital.qrCode = await generateQRCode(hospital._id);
     hospital.qrCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await hospital.save(); // Save again after QR generation
+    await hospital.save();
 
+    // Create the hospital user (emailVerified = false by default)
     const hospitalUser = new User({
       name,
       email,
       password,
       role: "hospital",
       hospitalId: hospital._id,
+      emailVerified: false,
     });
-
     await hospitalUser.save();
 
+    // Generate email verification token
+    const emailToken = crypto.randomBytes(32).toString("hex");
+    const newToken = new TokenModel({
+      userId: hospitalUser._id,
+      token: emailToken,
+    });
+    await newToken.save();
+
+    // Send verification email
+    const verificationLink = `${process.env.SERVER_DOMAIN}/api/auth/verify-email/${emailToken}`;
+    await verifyEmail(email, verificationLink);
+
     res.status(201).json({
-      message: "Hospital login account created successfully",
+      message:
+        "Hospital account created. Please verify your email to activate.",
       hospital,
-      token,
     });
   } catch (error) {
     console.error("Error creating hospital:", error);
@@ -70,13 +80,17 @@ const loginHospital = async (req, res) => {
 
     const hospitalUser = await User.findOne({ email });
 
-    if (!hospitalUser) {
+    if (!hospitalUser || hospitalUser.role !== "hospital") {
       return res.status(404).json({ message: "Hospital not found" });
     }
 
-    const isMatch = await bcrypt.compare(password, hospitalUser.password);
-    console.log("Password match:", isMatch);
+    if (!hospitalUser.emailVerified) {
+      return res
+        .status(403)
+        .json({ message: "Please verify your email before logging in." });
+    }
 
+    const isMatch = await bcrypt.compare(password, hospitalUser.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
@@ -104,7 +118,7 @@ const loginHospital = async (req, res) => {
 const updateHospitalProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { phone,  location, website, image, images } = req.body;
+    const { phone, location, website, image, images } = req.body;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -119,7 +133,7 @@ const updateHospitalProfile = async (req, res) => {
 
     // Update fields if provided
     if (phone) hospital.phone = phone;
-    if (location) hospital.location =  location;
+    if (location) hospital.location = location;
     if (website) hospital.website = website;
     if (image) hospital.image = image;
     if (Array.isArray(images)) {

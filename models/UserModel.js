@@ -6,10 +6,25 @@ const { Schema } = mongoose;
 const UserSchema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
     password: { type: String, required: true },
-    role: { type: String, enum: ["user", "hospital", "admin"], default: "user" },
-    hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital", default: null }, // Only for hospitals
+    role: {
+      type: String,
+      enum: ["user", "hospital", "admin"],
+      default: "user",
+    },
+    hospitalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null,
+    },
+    emailVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
