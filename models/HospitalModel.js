@@ -25,19 +25,20 @@ const HospitalSchema = new mongoose.Schema({
     trim: true,
   },
   image: {
-    type: String, 
-    default: "", 
+    type: String,
+    default: "",
   },
   images: {
-    type: [String], 
-    default: [],     
+    type: [String],
+    default: [],
   },
-  qrCode: { type: String }, 
+  qrCode: { type: String },
   qrCodeExpiresAt: { type: Date },
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  emailVerified: { type: Boolean, default: false },
 });
 
 const Hospital = mongoose.model("Hospital", HospitalSchema);
