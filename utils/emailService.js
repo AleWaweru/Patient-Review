@@ -1,21 +1,17 @@
-// utils/emailService.js
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASSWORD:", process.env.EMAIL_PASSWORD);
-
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp.gmail.com", // fallback to Gmail host
+  host: process.env.EMAIL_HOST || "smtp.gmail.com", 
   port: Number(process.env.EMAIL_PORT) || 465,
-  secure: process.env.EMAIL_SECURE === "true" || true, // secure: true for port 465
+  secure: process.env.EMAIL_SECURE === "true" || true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false, // ⚠️ Allow self-signed certs (safe for dev)
+    rejectUnauthorized: false, 
   },
 });
 

@@ -145,44 +145,49 @@ export const verifySentEmail = async (req, res) => {
 };
 
 //signup with google
-const signUpGoogle = async (req, res, next) => {
-  const { name, email, profilePicUrl } = req.body;
-
+const signInWithGoogle = async (req, res) => {
   try {
-    let user = await User.findOne({ email });
-    if (user) {
-      const token = jwtGenerator(user.id);
-      const { password, ...userData } = user.toObject();
+    const { name, email } = req.body;
 
-      return res
-        .status(200)
-        .cookie("access_token", token, { httpOnly: true })
-        .json({ ...userData, token });
+    if (!email || !name) {
+      return res.status(400).json({ message: "Name and email are required." });
     }
 
-    const generatedPassword = crypto.randomBytes(16).toString("hex");
-    const hashPassword = await bcrypt.hash(generatedPassword, bcryptSalt);
+    // Check if user already exists
+    let user = await User.findOne({ email });
 
-    user = new User({
-      name: `${name.toLowerCase().replace(/ /g, "")}${Math.random()
-        .toString(10)
-        .slice(-4)}`,
-      email,
-      password: hashPassword,
-      profilePic: profilePicUrl || undefined,
+    // If not, create a new user
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        password: null, // No password for Google users
+        role: "user",
+        emailVerified: true, // Consider Google emails verified
+      });
+      await user.save();
+    }
+
+    // Generate a token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      message: "Google Sign-In successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
-
-    await user.save();
-
-    const token = jwtGenerator(user.id);
-    const { password, ...userData } = user.toObject();
-
-    res
-      .status(201)
-      .cookie("access_token", token, { httpOnly: true })
-      .json({ ...userData, token });
   } catch (error) {
-    next(error);
+    console.error("Google Sign-In error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -201,5 +206,5 @@ export {
   loginAccount,
   resetPassword,
   logoutAccount,
-  signUpGoogle,
+  signInWithGoogle,
 };

@@ -25,6 +25,7 @@ const UserSchema = new Schema(
       default: null,
     },
     emailVerified: { type: Boolean, default: false },
+     provider: { type: String, default: 'credentials' },
   },
   { timestamps: true }
 );
